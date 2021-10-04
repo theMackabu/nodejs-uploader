@@ -1,0 +1,36 @@
+var http = require('http');
+var fs = require('fs');
+var handler = require('serve-handler');
+var formidable = require('formidable');
+var upload_html = fs.readFileSync("public/index.html");
+var upload_path = "api/files/";
+var files_path = "api/";
+var dirstamp = "";
+http.createServer(function (req, res) {
+  if (req.url == '/api/send') {
+    res.writeHead(200);
+    res.write(upload_html);
+    console.log('request sent');
+    return res.end();
+  } else if (req.url == '/api/sent') {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+      var oldpath = files.filetoupload.path;
+      var newpath = upload_path + dirstamp + files.filetoupload.name;
+      fs.copyFile(oldpath, newpath, function (err) {
+        if (err) throw err;
+        res.write('File uploaded and moved!');
+        console.log('file uploaded (1/2)');
+        console.log('file moved (2/2)');
+        console.log('+ ' + files.filetoupload.name)
+        res.end();
+      });
+    });
+  }
+  return handler(req, res, {
+    "directoryListing": false,
+    "public": files_path
+  }
+  );
+}).listen(80);
+console.log('page starting...');
